@@ -46,7 +46,7 @@ fn combine_weather_data_streams(
     weather_notes: impl Stream<String>,
 ) -> Stream<String> {
     stream! {
-        for await output in combine_latest(
+        for await output in map_latest(
             temperature,
             weather_notes,
             |t, n| format!("Temperature {t}°, note: {n}"),
