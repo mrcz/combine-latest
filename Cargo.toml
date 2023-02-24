@@ -1,0 +1,15 @@
+[package]
+name = "combine-latest"
+description = "Combines two streams into a new stream which yields tuples with the latest values from each input stream"
+version = "1.1.0"
+edition = "2021"
+authors = ["Marcus Svensson <marcus@lincopia.com>"]
+license = "MIT"
+repository = "https://github.com/mrcz/combine-latest"
+
+[dependencies]
+either = "1.8.1"
+futures-core = "0.3.26"
+futures-util = "0.3.26"
+
+[dev-dependencies]
