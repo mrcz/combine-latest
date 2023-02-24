@@ -72,7 +72,7 @@ pub fn map_latest<T1, T2, U>(
 pub fn map_latest_opt<T1, T2, U>(
     s1: impl Stream<Item = T1>,
     s2: impl Stream<Item = T2>,
-    mut f: impl for<'a, 'b> FnMut(&'a Option<T1>, &'b Option<T2>) -> U,
+    mut f: impl for<'a, 'b> FnMut(Option<&'a T1>, Option<&'b T2>) -> U,
 ) -> impl Stream<Item = U> {
     let mut current1 = None;
     let mut current2 = None;
@@ -82,6 +82,6 @@ pub fn map_latest_opt<T1, T2, U>(
             Either::Left(t1) => current1 = Some(t1),
             Either::Right(t2) => current2 = Some(t2),
         };
-        f(&current1, &current2)
+        f(current1.as_ref(), current2.as_ref())
     })
 }
