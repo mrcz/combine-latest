@@ -26,13 +26,13 @@ that yields `(Option<T1>, Option<T2>)` tuples.
 As values come in over time on the `temperature` and `weather_notes` streams, `combine_latest` and
 `combine_latest_optional` will yield values like so:
 
-|time| temperature  | weather_notes  | combine_latest        | combine_latest_optional           |
-|----|--------------|----------------|-----------------------|-----------------------------------|
-| 0  | 25           |                |                       | (Some(25), None)                  |
-| 1  | 26           |                |                       | (Some(26), None)                  |
-| 2  |              | Low visibility | (26, "Low visibility")| (Some(26), Some("Low visibility"))|
-| 3  |              | Foggy          | (26, "Foggy")         | (Some(26), Some("Foggy"))         |
-| 4  | 25           |                | (25, "Foggy")         | (Some(25), Some("Foggy"))         |
+|time| temperature  | weather_notes  | combine_latest         | combine_latest_optional            |
+|----|--------------|----------------|------------------------|------------------------------------|
+| 0  | 25           |                |                        | (Some(25), None)                   |
+| 1  | 26           |                |                        | (Some(26), None)                   |
+| 2  |              | Low visibility | (26, "Low visibility") | (Some(26), Some("Low visibility")) |
+| 3  |              | Foggy          | (26, "Foggy")          | (Some(26), Some("Foggy"))          |
+| 4  | 25           |                | (25, "Foggy")          | (Some(25), Some("Foggy"))          |
 
 
 Since the same input value might be returned several times in the output stream, the items that the

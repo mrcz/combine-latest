@@ -31,10 +31,10 @@ pub fn combine_latest_opt<T1: Clone, T2: Clone>(
 ) -> impl Stream<Item = (Option<T1>, Option<T2>)> {
     let mut current1 = None;
     let mut current2 = None;
-    select(s1.map(Either::Left), s2.map(Either::Right)).map(move |tuple| {
-        match tuple {
-            Either::Left(i1) => current1 = Some(i1),
-            Either::Right(i2) => current2 = Some(i2),
+    select(s1.map(Either::Left), s2.map(Either::Right)).map(move |t1_or_t2| {
+        match t1_or_t2 {
+            Either::Left(t1) => current1 = Some(t1),
+            Either::Right(t2) => current2 = Some(t2),
         };
         (current1.clone(), current2.clone())
     })
@@ -52,10 +52,10 @@ pub fn map_latest<T1, T2, U>(
     let mut current1 = None;
     let mut current2 = None;
 
-    select(s1.map(Either::Left), s2.map(Either::Right)).filter_map(move |tuple| {
-        match tuple {
-            Either::Left(i1) => current1 = Some(i1),
-            Either::Right(i2) => current2 = Some(i2),
+    select(s1.map(Either::Left), s2.map(Either::Right)).filter_map(move |t1_or_t2| {
+        match t1_or_t2 {
+            Either::Left(t1) => current1 = Some(t1),
+            Either::Right(t2) => current2 = Some(t2),
         };
         future::ready(
             current1
@@ -77,10 +77,10 @@ pub fn map_latest_opt<T1, T2, U>(
     let mut current1 = None;
     let mut current2 = None;
 
-    select(s1.map(Either::Left), s2.map(Either::Right)).map(move |tuple| {
-        match tuple {
-            Either::Left(i1) => current1 = Some(i1),
-            Either::Right(i2) => current2 = Some(i2),
+    select(s1.map(Either::Left), s2.map(Either::Right)).map(move |t1_or_t2| {
+        match t1_or_t2 {
+            Either::Left(t1) => current1 = Some(t1),
+            Either::Right(t2) => current2 = Some(t2),
         };
         f(&current1, &current2)
     })
