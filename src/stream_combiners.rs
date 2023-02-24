@@ -61,7 +61,7 @@ pub fn map_latest<T1, T2, U>(
             current1
                 .as_ref()
                 .zip(current2.as_ref())
-                .map(|args| f(&args.0, &args.1)),
+                .map(|args| f(args.0, args.1)),
         )
     })
 }
