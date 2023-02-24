@@ -20,13 +20,13 @@ fn combine_weather_data_streams(
 ```
 
 `combine_latest` won't yield its first tuple until both input streams have yielded a value. If you
-need to get items as soon as the first is available, there is a `combine_latest_optional` function
-that yields `(Option<T1>, Option<T2>)` tuples.
+need to get items as soon as the first is available, there is a `combine_latest_opt` function that
+yields `(Option<T1>, Option<T2>)` tuples.
 
 As values come in over time on the `temperature` and `weather_notes` streams, `combine_latest` and
-`combine_latest_optional` will yield values like so:
+`combine_latest_opt` will yield values like so:
 
-|time| temperature  | weather_notes  | combine_latest         | combine_latest_optional            |
+|time| temperature  | weather_notes  | combine_latest         | combine_latest_opt                 |
 |----|--------------|----------------|------------------------|------------------------------------|
 | 0  | 25           |                |                        | (Some(25), None)                   |
 | 1  | 26           |                |                        | (Some(26), None)                   |
