@@ -8,7 +8,6 @@ license = "MIT"
 repository = "https://github.com/mrcz/combine-latest"
 
 [dependencies]
-either = "1.8.1"
 futures-core = "0.3.26"
 futures-util = "0.3.26"
 

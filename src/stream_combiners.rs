@@ -1,8 +1,12 @@
 use std::future;
 
-use either::Either;
 use futures_core::Stream;
-use futures_util::{stream::select, StreamExt};
+use futures_util::{StreamExt, stream::select};
+
+enum LR<L, R> {
+    L(L),
+    R(R),
+}
 
 /// Combines two streams into a new stream that always contains the latest items from both streams
 /// as a tuple. This stream won't yield a tuple until both input streams have yielded at least one
@@ -31,10 +35,10 @@ pub fn combine_latest_opt<T1: Clone, T2: Clone>(
 ) -> impl Stream<Item = (Option<T1>, Option<T2>)> {
     let mut current1 = None;
     let mut current2 = None;
-    select(s1.map(Either::Left), s2.map(Either::Right)).map(move |t1_or_t2| {
+    select(s1.map(LR::L), s2.map(LR::R)).map(move |t1_or_t2| {
         match t1_or_t2 {
-            Either::Left(t1) => current1 = Some(t1),
-            Either::Right(t2) => current2 = Some(t2),
+            LR::L(t1) => current1 = Some(t1),
+            LR::R(t2) => current2 = Some(t2),
         };
         (current1.clone(), current2.clone())
     })
@@ -52,10 +56,10 @@ pub fn map_latest<T1, T2, U>(
     let mut current1 = None;
     let mut current2 = None;
 
-    select(s1.map(Either::Left), s2.map(Either::Right)).filter_map(move |t1_or_t2| {
+    select(s1.map(LR::L), s2.map(LR::R)).filter_map(move |t1_or_t2| {
         match t1_or_t2 {
-            Either::Left(t1) => current1 = Some(t1),
-            Either::Right(t2) => current2 = Some(t2),
+            LR::L(t1) => current1 = Some(t1),
+            LR::R(t2) => current2 = Some(t2),
         };
         future::ready(
             current1
@@ -77,10 +81,10 @@ pub fn map_latest_opt<T1, T2, U>(
     let mut current1 = None;
     let mut current2 = None;
 
-    select(s1.map(Either::Left), s2.map(Either::Right)).map(move |t1_or_t2| {
+    select(s1.map(LR::L), s2.map(LR::R)).map(move |t1_or_t2| {
         match t1_or_t2 {
-            Either::Left(t1) => current1 = Some(t1),
-            Either::Right(t2) => current2 = Some(t2),
+            LR::L(t1) => current1 = Some(t1),
+            LR::R(t2) => current2 = Some(t2),
         };
         f(current1.as_ref(), current2.as_ref())
     })
