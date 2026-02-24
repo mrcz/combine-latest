@@ -496,6 +496,9 @@ mod tests {
     use futures::executor::block_on;
     use futures::stream::{self, StreamExt};
 
+    // Tests rely on `futures::stream::select` round-robin polling: with immediately-ready
+    // `stream::iter` streams, it alternates s1, s2, s1, s2, ... yielding deterministic output.
+
     // -- 2-stream tests --
 
     #[test]
