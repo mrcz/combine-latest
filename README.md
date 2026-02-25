@@ -5,31 +5,27 @@
 [![docs.rs](https://docs.rs/combine-latest/badge.svg)](https://docs.rs/combine-latest)
 
 Combines two or more streams into a new stream which yields tuples with the latest values from each
-input stream. Inspired by RxJS's `combineLatest`. Supports 2, 3, and 4 input streams.
+input stream. Inspired by RxJS's `combineLatest`. The trait-based API supports up to 12 streams;
+free functions are available for 2–4.
 
 ```rust
-use async_stream::stream;
-use combine_latest::combine_latest;
-use futures_core::Stream;
+use combine_latest::CombineLatest;
+use futures::executor::block_on;
+use futures::stream::{self, StreamExt};
 
-fn combine_weather_data_streams(
-    temperature: impl Stream<Item = i32>,
-    weather_notes: impl Stream<Item = String>,
-) -> impl Stream<Item = String> {
-    stream! {
-        for await (t, n) in combine_latest(temperature, weather_notes) {
-            yield format!("Temperature {t}°, note: {n}");
-        }
-    }
-}
+let temperature = stream::iter([25, 26, 25]);
+let weather_notes = stream::iter(["Low visibility", "Foggy"]);
+let result: Vec<_> = block_on(
+    (temperature, weather_notes).combine_latest().collect()
+);
 ```
 
-`combine_latest` won't yield its first tuple until both input streams have yielded a value. If you
-need to get items as soon as the first is available, there is a `combine_latest_opt` function that
-yields `(Option<T1>, Option<T2>)` tuples.
+`combine_latest` won't yield its first tuple until all input streams have yielded a value. If you
+need to get items as soon as the first is available, use `combine_latest_opt` /
+`CombineLatestOpt` which yields tuples of `Option`s.
 
-As values come in over time on the `temperature` and `weather_notes` streams, `combine_latest` and
-`combine_latest_opt` will yield values like so:
+As values come in over time on two example streams, `combine_latest` and `combine_latest_opt` will
+yield values like so:
 
 | time | temperature | weather_notes  | combine_latest         | combine_latest_opt                 |
 |------|-------------|----------------|------------------------|------------------------------------|
@@ -42,55 +38,69 @@ As values come in over time on the `temperature` and `weather_notes` streams, `c
 Since the same input value might be returned several times in the output stream, the items that the
 input streams yield *must implement Clone.*
 
-For types that don't implement Clone, it's possible to use the function `map_latest`:
+For types that don't implement Clone, use `map_latest` / `MapLatest` which passes references to a
+closure instead:
 
 ```rust
-use async_stream::stream;
-use combine_latest::map_latest;
-use futures_core::Stream;
-
-struct NonCloneTemperature(i32);
-
-fn combine_weather_data_streams(
-    temperature: impl Stream<Item = NonCloneTemperature>,
-    weather_notes: impl Stream<Item = String>,
-) -> impl Stream<Item = String> {
-    stream! {
-        for await output in map_latest(
-            temperature,
-            weather_notes,
-            |t, n| format!("Temperature {}°, note: {n}", t.0),
-        ) {
-            yield output;
-        }
-    }
-}
-```
-
-## Combining 3 or 4 streams
-
-All functions have `3` and `4` variants for combining more streams:
-
-```rust
-use combine_latest::{combine_latest3, map_latest4};
+use combine_latest::MapLatest;
 use futures::executor::block_on;
 use futures::stream::{self, StreamExt};
 
-// Combine 3 streams into tuples
-let s1 = stream::iter([1, 2]);
-let s2 = stream::iter(["a", "b"]);
-let s3 = stream::iter([true]);
-let result: Vec<_> = block_on(combine_latest3(s1, s2, s3).collect());
+struct NonClone(i32);
 
-// Or use map_latest4 to apply a function over 4 streams
-let s1 = stream::iter([1]);
+let s1 = stream::iter([NonClone(1), NonClone(2)]);
+let s2 = stream::iter([NonClone(10)]);
+let result: Vec<_> = block_on(
+    (s1, s2).map_latest(|a, b| a.0 + b.0).collect()
+);
+assert_eq!(result, vec![11, 12]);
+```
+
+## Free functions
+
+All combinators are also available as free functions for 2–4 streams:
+
+```rust
+use combine_latest::{combine_latest, map_latest3};
+use futures::executor::block_on;
+use futures::stream::{self, StreamExt};
+
+let s1 = stream::iter([1, 2, 3]);
+let s2 = stream::iter(["a", "b"]);
+let result: Vec<_> = block_on(combine_latest(s1, s2).collect());
+assert_eq!(result, vec![(1, "a"), (2, "a"), (2, "b"), (3, "b")]);
+
+let s1 = stream::iter([1, 2]);
 let s2 = stream::iter(["a"]);
 let s3 = stream::iter([true]);
-let s4 = stream::iter([0.5_f64]);
-let result: Vec<_> = block_on(map_latest4(s1, s2, s3, s4, |a, b, c, d| {
-    format!("{a}-{b}-{c}-{d}")
+let result: Vec<_> = block_on(map_latest3(s1, s2, s3, |n, s, b| {
+    format!("{n}-{s}-{b}")
 }).collect());
+assert_eq!(result, vec!["1-a-true", "2-a-true"]);
 ```
+
+## `with_latest_from`
+
+`with_latest_from` is like `combine_latest`, but only emits when the **primary** (first) stream
+yields a value. Secondary streams silently update their cached values in the background. This is
+useful when one stream drives the logic and the others provide context — for example, emitting on
+each user click while attaching the latest form state.
+
+```rust
+use combine_latest::WithLatestFrom;
+use futures::executor::block_on;
+use futures::stream::{self, StreamExt};
+
+let clicks = stream::iter([1, 2, 3]);
+let form_state = stream::iter(["draft"]);
+let result: Vec<_> = block_on(
+    (clicks, form_state).with_latest_from().collect()
+);
+// Click 1 is skipped because form_state hasn't yielded yet
+assert_eq!(result, vec![(2, "draft"), (3, "draft")]);
+```
+
+`MapWithLatestFrom` is the reference-based variant (no `Clone` required).
 
 ## Installation
 
