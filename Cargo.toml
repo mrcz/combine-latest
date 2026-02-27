@@ -1,7 +1,7 @@
 [package]
 name = "combine-latest"
 description = "Combines two or more streams into a new stream which yields tuples with the latest values from each input stream"
-version = "1.3.0"
+version = "1.3.1"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Marcus Svensson <marcus@lincopia.com>"]

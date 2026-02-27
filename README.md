@@ -24,8 +24,14 @@ let result: Vec<_> = block_on(
 need to get items as soon as the first is available, use `combine_latest_opt` /
 `CombineLatestOpt` which yields tuples of `Option`s.
 
-As values come in over time on two example streams, `combine_latest` and `combine_latest_opt` will
+As values come in over time on two input streams, `combine_latest` and `combine_latest_opt` will
 yield values like so:
+
+```text
+temperature ──┐
+              ├── combine_latest ──► (T, W) tuples
+weather_notes ┘
+```
 
 | time | temperature | weather_notes  | combine_latest         | combine_latest_opt                 |
 |------|-------------|----------------|------------------------|------------------------------------|
@@ -56,6 +62,22 @@ let result: Vec<_> = block_on(
 assert_eq!(result, vec![11, 12]);
 ```
 
+Using the same input streams with `map_latest(|t, w| format!("{t}°: {w}"))`:
+
+```text
+temperature ──┐
+              ├── map_latest(|t, w| ...) ──► closure results
+weather_notes ┘
+```
+
+| time | temperature | weather_notes  | map_latest output     |
+|------|-------------|----------------|-----------------------|
+| 0    | 25          |                |                       |
+| 1    | 26          |                |                       |
+| 2    |             | Low visibility | "26°: Low visibility" |
+| 3    |             | Foggy          | "26°: Foggy"          |
+| 4    | 25          |                | "25°: Foggy"          |
+
 ## Free functions
 
 All combinators are also available as free functions for 2–4 streams:
@@ -85,6 +107,12 @@ assert_eq!(result, vec!["1-a-true", "2-a-true"]);
 yields a value. Secondary streams silently update their cached values in the background. This is
 useful when one stream drives the logic and the others provide context — for example, emitting on
 each user click while attaching the latest form state.
+
+```text
+clicks (primary) ──┐
+                   ├── with_latest_from ──► (Click, State) tuples
+form_state ────────┘   (emits only when primary yields)
+```
 
 ```rust
 use combine_latest::WithLatestFrom;
